@@ -145,7 +145,7 @@ class Juego:
             self.eliminar_balas(self.balas)
             self.eliminar_balas_rivales(self.balasRivales)
             self.disparo_a_jugador()
-            self.fin_de_juego()
+            self.fin_de_juego(fin)
             self.set_lvl(fin)
             pygame.display.flip()
             reloj.tick(40)
@@ -207,9 +207,17 @@ class Juego:
                 self.balasRivales.remove(bala)
         return ls_col
 
-    def fin_de_juego(self):
-        if self.j.vidas == 0:
-            self.gameOver = True
+    def fin_de_juego(self,fin):
+        if self.j.vidas <= 0:
+            txt  = "fin del juego te quedaste sin vidas"
+            mensaje = self.fuente.render(txt , 1 , BLANCO)
+            self.ventana.fill(NEGRO)
+            self.ventana.blit(mensaje , (ANCHO/2 , ALTO/2))
+            self.lvl = 0
+            self.j.vidas = 3
+            self.quitar_todos_los_rivales()
+            self.pausa_entre_niveles(fin)
+
 
     def info_game(self):
         text = "Vidas : " + str(self.j.vidas)
@@ -225,19 +233,10 @@ class Juego:
                 self.rivales.add(enemigo)
                 self.dibujar_sprites()
                 self.quitar_todas_las_balas()
-
-            quitar = False
-            while not quitar and not fin:
-                for event in pygame.event.get():
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        quitar = True
-                    if event.type == pygame.QUIT:
-                        quitar = True
-                        fin = True
-                txt = "Nivel " + str(self.lvl)
-                mensaje = self.fuenteCentral.render(txt , 1 , BLANCO)
-                self.ventana.blit(mensaje , (200 , 100))
-                pygame.display.flip()
+            txt = "Nivel " + str(self.lvl)
+            mensaje = self.fuenteCentral.render(txt , 1 , BLANCO)
+            self.ventana.blit(mensaje , (200 , 100))
+            self.pausa_entre_niveles(fin)
 
     def dibujar_sprites(self):
         self.jugadores.draw(self.ventana)
@@ -250,3 +249,17 @@ class Juego:
             self.balas.remove(bala)
         for bala in self.balasRivales:
             self.balasRivales.remove(bala)
+
+    def quitar_todos_los_rivales(self):
+        for rival in self.rivales:
+            self.rivales.remove(rival)
+
+    def pausa_entre_niveles(self, fin):
+        pygame.display.flip()
+        quitar = False
+        while not quitar and not fin:
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    quitar = True
+                if event.type == pygame.QUIT:
+                    fin = True

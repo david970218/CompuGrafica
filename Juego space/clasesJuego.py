@@ -101,7 +101,10 @@ class Enemigo(sprite):
 class Juego:
     def __init__(self):
         #Definicion de variables
+        self.fuente = pygame.font.Font(None , 30)
+        self.fuenteCentral = pygame.font.Font(None , 70)
         self.gameOver = False
+        self.lvl = 0
         self.ventana=pygame.display.set_mode([ANCHO,ALTO])
         self.jugadores=pygame.sprite.Group()
         self.rivales=pygame.sprite.Group()
@@ -111,14 +114,10 @@ class Juego:
         self.balasRivales = pygame.sprite.Group()
         self.j= self.jugadorCreator.factory_method()
         self.jugadores.add(self.j)
-        n=1
-        for i in range(n):
-            r = self.enemigoCreator.factory_method()
-            self.rivales.add(r)
 
     def Jugar(self):
         reloj=pygame.time.Clock()
-        pause = True
+        pause = False
         fin=False
         while not fin:
             #Gestion eventos
@@ -133,21 +132,21 @@ class Juego:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     self.balas.add(self.j.disparo())
             #Refresco
+
             self.tick(self.rivales)
+            self.ventana.fill(NEGRO)
+            self.info_game()
             self.disparo_rivales(self.rivales , self.balasRivales)
             self.update(self.balas)
             self.update(self.balasRivales)
             self.update(self.rivales)
-            self.ventana.fill(NEGRO)
-            self.jugadores.draw(self.ventana)
-            self.balas.draw(self.ventana)
-            self.balasRivales.draw(self.ventana)
-            self.rivales.draw(self.ventana)
+            self.dibujar_sprites()
             self.colisiones_balas(self.balas, self.rivales)
             self.eliminar_balas(self.balas)
             self.eliminar_balas_rivales(self.balasRivales)
             self.disparo_a_jugador()
             self.fin_de_juego()
+            self.set_lvl(fin)
             pygame.display.flip()
             reloj.tick(40)
             while pause:
@@ -158,7 +157,6 @@ class Juego:
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_ESCAPE:
                             pause = False
-            print self.j.vidas
 
     def colisiones_balas(self , balas , enemigos):
         ls_col = []
@@ -180,8 +178,6 @@ class Juego:
                 sprite.velx *= -1
             sprite.rect.x += sprite.velx
             sprite.rect.y += sprite.vely
-
-
 
 
     def disparo_rivales(self , enemigos , balas):
@@ -214,3 +210,43 @@ class Juego:
     def fin_de_juego(self):
         if self.j.vidas == 0:
             self.gameOver = True
+
+    def info_game(self):
+        text = "Vidas : " + str(self.j.vidas)
+        mensaje = self.fuente.render(text , 1 , BLANCO)
+        self.ventana.blit(mensaje , (0,0))
+
+    def set_lvl(self , fin):
+        if len(self.rivales) == 0:
+            self.lvl += 1
+            for i in range(0 , self.lvl):
+                enemigo = self.enemigoCreator.factory_method()
+                self.ventana.fill(NEGRO)
+                self.rivales.add(enemigo)
+                self.dibujar_sprites()
+                self.quitar_todas_las_balas()
+
+            quitar = False
+            while not quitar and not fin:
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONDOWN:
+                        quitar = True
+                    if event.type == pygame.QUIT:
+                        quitar = True
+                        fin = True
+                txt = "Nivel " + str(self.lvl)
+                mensaje = self.fuenteCentral.render(txt , 1 , BLANCO)
+                self.ventana.blit(mensaje , (200 , 100))
+                pygame.display.flip()
+
+    def dibujar_sprites(self):
+        self.jugadores.draw(self.ventana)
+        self.balas.draw(self.ventana)
+        self.balasRivales.draw(self.ventana)
+        self.rivales.draw(self.ventana)
+
+    def quitar_todas_las_balas(self):
+        for bala in self.balas:
+            self.balas.remove(bala)
+        for bala in self.balasRivales:
+            self.balasRivales.remove(bala)

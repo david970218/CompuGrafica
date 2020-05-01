@@ -16,7 +16,8 @@ class sprite(pygame.sprite.Sprite):
     def __init__(self,image, color  , pos , vel):
         pygame.sprite.Sprite.__init__(self)
         self.image= image
-        self.image.fill(color)
+        if color != None:
+            self.image.fill(color)
         self.rect=self.image.get_rect()
         self.rect.x=pos[0]
         self.rect.y=pos[1]
@@ -33,6 +34,7 @@ class sprite(pygame.sprite.Sprite):
 
     def get_pos(self):
         return(self.rect.x , self.rect.y)
+
 
 class Creator:
     def factory_method(self , args = None):
@@ -53,11 +55,21 @@ class BloqueCreator(Creator):
         vel = (0 , 0)
         return Bloque(image , color , pos , vel)
 
+class FondoCreator(Creator):
+    def factory_method(self, pos):
+        image = pygame.image.load("Fondo/fondo.jpg")
+        color = ROJO
+        vel = (0 , 0)
+        return Fondo(image , None , pos , vel)
+
 
 class Jugador(sprite):
     vidas = 3
     def mover(self , x):
         self.rect.x = x
+
+class Fondo(sprite):
+    pass
 
 
 class Bloque(sprite):
@@ -67,6 +79,7 @@ class Juego:
     def __init__(self):
         #Definicion de variables
         self.gameOver = False
+        self.fondo = FondoCreator().factory_method((0,0))
         self.ventana=pygame.display.set_mode([ANCHO,ALTO])
         self.bloques = pygame.sprite.Group()
         self.jugadores=pygame.sprite.Group()
@@ -104,6 +117,7 @@ class Juego:
 
             #Refresco
             self.ventana.fill(NEGRO)
+            self.fondo.draw(self.ventana)
             self.jugadores.draw(self.ventana)
             self.bloques.draw(self.ventana)
             self.colisiones()

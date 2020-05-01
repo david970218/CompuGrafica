@@ -19,6 +19,7 @@ class sprite(pygame.sprite.Sprite):
         if color != None:
             self.image.fill(color)
         self.rect=self.image.get_rect()
+        print self.image.get_rect() , type(self)
         self.rect.x=pos[0]
         self.rect.y=pos[1]
         self.velx = vel[0]
@@ -49,16 +50,19 @@ class JugadorCreator(Creator):
         return Jugador(image , color , pos , vel)
 
 class BloqueCreator(Creator):
-    def factory_method(self, pos , tam):
-        image = pygame.Surface(tam)
-        color = ROJO
+    def factory_method(self, pos , tam ,  texturas = None , poscorte = None):
+        if texturas != None:
+            image = texturas.subsurface(poscorte[0] , poscorte[1]  , tam[0] , tam[1])
+            color = None
+        else:
+            image = pygame.Surface(tam)
+            color = ROJO
         vel = (0 , 0)
         return Bloque(image , color , pos , vel)
 
 class FondoCreator(Creator):
     def factory_method(self, pos):
-        image = pygame.image.load("Fondo/fondo.jpg")
-        color = ROJO
+        image = pygame.image.load("Mapa/mapa1.png")
         vel = (0 , 0)
         return Fondo(image , None , pos , vel)
 
@@ -80,12 +84,17 @@ class Juego:
         #Definicion de variables
         self.gameOver = False
         self.fondo = FondoCreator().factory_method((0,0))
+        self.texturas = pygame.image.load("Fondo/textura.png")
+        self.cuadro = self.texturas.subsurface(0,0,32,32)
         self.ventana=pygame.display.set_mode([ANCHO,ALTO])
+        self.texturaFondo = pygame.sprite.Group()
         self.bloques = pygame.sprite.Group()
         self.jugadores=pygame.sprite.Group()
         self.jugadorCreator = JugadorCreator()
         self.bloqueCreator = BloqueCreator()
-        self.bloque = self.bloqueCreator.factory_method((300,300) , (100 , 70))
+        self.bloque = self.bloqueCreator.factory_method((300,300) , (32 , 32) ,  self.texturas , (0,0)  )
+
+        self.texturaFondo.add(self.fondo)
         self.bloques.add(self.bloque)
         self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2))
         self.jugadores.add(self.j)
@@ -117,9 +126,11 @@ class Juego:
 
             #Refresco
             self.ventana.fill(NEGRO)
-            self.fondo.draw(self.ventana)
-            self.jugadores.draw(self.ventana)
+            self.ventana.blit(self.cuadro , [0,0])
+
+            self.texturaFondo.draw(self.ventana)
             self.bloques.draw(self.ventana)
+            self.jugadores.draw(self.ventana)
             self.colisiones()
             self.update(self.jugadores)
             pygame.display.flip()

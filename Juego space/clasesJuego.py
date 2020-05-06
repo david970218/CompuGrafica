@@ -43,11 +43,31 @@ class Creator:
 
 
 class JugadorCreator(Creator):
-    def factory_method(self, pos):
-        image = pygame.Surface([ 50 , 50 ])
-        color = BLANCO
+    def __init__(self):
+        self.personajes = pygame.image.load("Sprites/animales.png")
+
+    def cargarAnimales(self ,(x,y) ):
+        animal = []
+        for i in range(x ,x + 4):
+            ls = []
+            for j in range(y, y + 3):
+                corte = self.personajes.subsurface( j*32 , i*32 , 32 , 32 )
+                ls.append(corte)
+            animal.append(ls)
+        return animal
+
+
+    def factory_method(self, pos , name):
+        image = pygame.Surface([ 32 , 32 ])
+        color = None
         vel = (0 , 0)
-        return Jugador(image , color , pos , vel)
+        jugador = Jugador(image , color , pos , vel)
+        if name == "gato":
+            jugador.animal = self.cargarAnimales((0,0))
+            jugador.setAnim()
+        return jugador
+
+
 
 class BloqueCreator(Creator):
     def factory_method(self, pos , tam ,  texturas = None , poscorte = None):
@@ -68,9 +88,34 @@ class FondoCreator(Creator):
 
 
 class Jugador(sprite):
+    abajo = 0
+    izquierda = 1
+    derecha = 2
+    arriba = 3
+    dir = 0
+    animacion = 1
+    animal = None
     vidas = 3
+
     def mover(self , x):
         self.rect.x = x
+
+    def setAnim(self):
+        if self.vely == 0:
+            if self.dir == self.arriba:
+                self.animacion = 0
+            elif self.dir == self.abajo:
+                self.animacion = 0
+        if self.velx == 0:
+            if self.dir == self.izquierda:
+                self.animacion = 0
+            elif self.dir == self.derecha:
+                self.animacion = 0
+        if self.animacion == 2:
+            self.animacion = 0
+        else:
+            self.animacion += 1
+        self.image = self.animal[self.dir][self.animacion]
 
 class Fondo(sprite):
     pass
@@ -96,7 +141,7 @@ class Juego:
 
         self.texturaFondo.add(self.fondo)
         self.bloques.add(self.bloque)
-        self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2))
+        self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2) , "gato")
         self.jugadores.add(self.j)
 
     def Jugar(self):
@@ -112,22 +157,29 @@ class Juego:
                     if event.key == pygame.K_ESCAPE:
                             pause = True
                     if event.key == pygame.K_UP:
+                        self.j.dir = self.j.arriba
                         self.j.vely = -5
                         self.j.velx = 0
                     if event.key == pygame.K_LEFT:
+                        self.j.dir = self.j.izquierda
                         self.j.velx  = -5
                         self.j.vely = 0
                     if event.key == pygame.K_RIGHT:
+                        self.j.dir = self.j.derecha
                         self.j.velx  = 5
                         self.j.vely = 0
                     if event.key == pygame.K_DOWN:
+                        self.j.dir = self.j.abajo
                         self.j.velx  = 0
                         self.j.vely = 5
+                    if event.key == pygame.K_SPACE:
+                        self.j.velx = 0
+                        self.j.vely = 0
 
             #Refresco
             self.ventana.fill(NEGRO)
             self.ventana.blit(self.cuadro , [0,0])
-
+            self.j.setAnim()
             self.texturaFondo.draw(self.ventana)
             self.bloques.draw(self.ventana)
             self.jugadores.draw(self.ventana)
@@ -149,9 +201,9 @@ class Juego:
     def update(self , sprites):
         for sprite in sprites:
             if sprite.rect.x + sprite.velx > ANCHO - 50  or sprite.rect.x + sprite.velx < 0:
-                sprite.velx *= -1
+                pass
             if sprite.rect.y + sprite.vely > ALTO - 50  or sprite.rect.y + sprite.vely < 0:
-                sprite.vely *= -1
+                pass
             sprite.rect.x += sprite.velx
             sprite.rect.y += sprite.vely
 

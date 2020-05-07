@@ -19,7 +19,6 @@ class sprite(pygame.sprite.Sprite):
         if color != None:
             self.image.fill(color)
         self.rect=self.image.get_rect()
-        print self.image.get_rect() , type(self)
         self.rect.x=pos[0]
         self.rect.y=pos[1]
         self.velx = vel[0]
@@ -44,27 +43,26 @@ class Creator:
 
 class JugadorCreator(Creator):
     def __init__(self):
-        self.personajes = pygame.image.load("Sprites/animales.png")
+        self.personaje = pygame.image.load("Sprites/ken.png")
 
-    def cargarAnimales(self ,(x,y) ):
-        animal = []
-        for i in range(x ,x + 4):
-            ls = []
-            for j in range(y, y + 3):
-                corte = self.personajes.subsurface( j*32 , i*32 , 32 , 32 )
-                ls.append(corte)
-            animal.append(ls)
-        return animal
+    def cargarAnimaciones(self):
+        animaciones = []
+        for i in range(0 , 10):
+            animacion = []
+            for j in range(0 , 7):
+                corte = self.personaje.subsurface( j*52 , i*61 , 52 , 61 )
+                animacion.append(corte)
+            animaciones.append(animacion)
+        return animaciones
 
 
-    def factory_method(self, pos , name):
+    def factory_method(self, pos):
         image = pygame.Surface([ 32 , 32 ])
         color = None
         vel = (0 , 0)
-        jugador = Jugador(image , color , pos , vel)
-        if name == "gato":
-            jugador.animal = self.cargarAnimales((0,0))
-            jugador.setAnim()
+        jugador = ken(image , color , pos , vel)
+        jugador.animaciones = self.cargarAnimaciones()
+        jugador.setAnim()
         return jugador
 
 
@@ -88,34 +86,58 @@ class FondoCreator(Creator):
 
 
 class Jugador(sprite):
-    abajo = 0
-    izquierda = 1
-    derecha = 2
-    arriba = 3
-    dir = 0
-    animacion = 1
-    animal = None
-    vidas = 3
+    pass
 
-    def mover(self , x):
-        self.rect.x = x
+class ken(Jugador):
+    anim = 1
+    cont = 0
+    poder = 0
+    defensa = 1
+    punio = 2
+    caminar = 3
+    patada = 6
+    patadaGiratoria = 7
+    salto = 8
+    agacharse = 9
+    animaciones = None
 
     def setAnim(self):
-        if self.vely == 0:
-            if self.dir == self.arriba:
-                self.animacion = 0
-            elif self.dir == self.abajo:
-                self.animacion = 0
-        if self.velx == 0:
-            if self.dir == self.izquierda:
-                self.animacion = 0
-            elif self.dir == self.derecha:
-                self.animacion = 0
-        if self.animacion == 2:
-            self.animacion = 0
-        else:
-            self.animacion += 1
-        self.image = self.animal[self.dir][self.animacion]
+        if self.anim == self.agacharse:
+            self.cont = 0
+
+        self.image = self.animaciones[self.anim][self.cont]
+        if self.anim == self.poder:
+            if self.cont == 3:
+                self.cont = 0
+                self.anim = self.defensa
+        elif self.anim == self.defensa:
+            if self.cont == 3:
+                self.cont = 0
+        elif self.anim == self.punio:
+            if self.cont == 2:
+                self.cont = 0
+                self.anim = self.defensa
+        elif self.anim == self.caminar:
+            if self.cont == 4:
+                self.cont = 0
+        elif self.anim == self.patada:
+            if self.cont == 4:
+                self.cont = 0
+                self.anim = self.defensa
+        elif self.anim == self.patadaGiratoria:
+            if self.cont == 4:
+                self.cont = 0
+                self.anim = self.defensa
+        elif self.anim == self.salto:
+            if self.cont == 6:
+                self.cont = 0
+                self.anim = self.defensa
+        self.cont += 1
+
+
+
+
+
 
 class Fondo(sprite):
     pass
@@ -138,15 +160,15 @@ class Juego:
         self.jugadorCreator = JugadorCreator()
         self.bloqueCreator = BloqueCreator()
         self.bloque = self.bloqueCreator.factory_method((300,300) , (32 , 32) ,  self.texturas , (0,0)  )
-
+        self.reloj=pygame.time.Clock()
         self.texturaFondo.add(self.fondo)
         self.bloques.add(self.bloque)
-        self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2) , "gato")
+        self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2))
         self.jugadores.add(self.j)
 
     def Jugar(self):
-        reloj=pygame.time.Clock()
         pause = True
+
         fin=False
         while not fin:
             #Gestion eventos
@@ -157,36 +179,47 @@ class Juego:
                     if event.key == pygame.K_ESCAPE:
                             pause = True
                     if event.key == pygame.K_UP:
-                        self.j.dir = self.j.arriba
-                        self.j.vely = -5
+                        self.j.anim = self.j.salto
+                        self.j.vely = 0
                         self.j.velx = 0
-                    if event.key == pygame.K_LEFT:
-                        self.j.dir = self.j.izquierda
+                    if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+                        self.j.anim = self.j.caminar
+                        self.j.cont = 0
                         self.j.velx  = -5
+                        if event.key == pygame.K_RIGHT:
+                            self.j.velx = 5
                         self.j.vely = 0
-                    if event.key == pygame.K_RIGHT:
-                        self.j.dir = self.j.derecha
-                        self.j.velx  = 5
-                        self.j.vely = 0
-                    if event.key == pygame.K_DOWN:
-                        self.j.dir = self.j.abajo
+                        fin2 = False
+                        while not fin2:
+                            for event in pygame.event.get():
+                                if event.type == pygame.KEYDOWN:
+                                    self.j.anim = self.j.salto
+                                if event.type == pygame.KEYUP and event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT :
+                                    fin2=True
+                            if self.j.anim == self.j.defensa:
+                                self.j.anim =  self.j.caminar
+                            self.refresco()
+                        self.j.cont = 0
+                        self.j.anim = self.j.defensa
                         self.j.velx  = 0
-                        self.j.vely = 5
+                    if event.key == pygame.K_DOWN:
+                        self.j.anim = self.j.agacharse
+                        fin2 = False
+                        while not fin2:
+                            for event in pygame.event.get():
+                                if event.type == pygame.KEYUP:
+                                    fin2=True
+                            self.refresco()
+                        self.j.anim = self.j.defensa
+
                     if event.key == pygame.K_SPACE:
                         self.j.velx = 0
                         self.j.vely = 0
 
+
             #Refresco
-            self.ventana.fill(NEGRO)
-            self.ventana.blit(self.cuadro , [0,0])
-            self.j.setAnim()
-            self.texturaFondo.draw(self.ventana)
-            self.bloques.draw(self.ventana)
-            self.jugadores.draw(self.ventana)
-            self.colisiones()
-            self.update(self.jugadores)
-            pygame.display.flip()
-            reloj.tick(40)
+            self.refresco()
+
             while pause:
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
@@ -196,6 +229,17 @@ class Juego:
                         if event.key == pygame.K_ESCAPE:
                             pause = False
 
+    def refresco(self):
+        self.ventana.fill(NEGRO)
+        self.ventana.blit(self.cuadro , [0,0])
+        self.j.setAnim()
+        self.texturaFondo.draw(self.ventana)
+        self.bloques.draw(self.ventana)
+        self.jugadores.draw(self.ventana)
+        self.colisiones()
+        self.update(self.jugadores)
+        pygame.display.flip()
+        self.reloj.tick(10)
 
 
     def update(self , sprites):

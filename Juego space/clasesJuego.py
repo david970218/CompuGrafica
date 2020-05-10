@@ -159,7 +159,7 @@ class Juego:
         self.jugadores=pygame.sprite.Group()
         self.jugadorCreator = JugadorCreator()
         self.bloqueCreator = BloqueCreator()
-        self.bloque = self.bloqueCreator.factory_method((300,300) , (32 , 32) ,  self.texturas , (0,0)  )
+        self.bloque = self.bloqueCreator.factory_method((900 , ALTO/2) , (32 , 32) )
         self.reloj=pygame.time.Clock()
         self.texturaFondo.add(self.fondo)
         self.bloques.add(self.bloque)
@@ -168,17 +168,18 @@ class Juego:
 
     def Jugar(self):
         pause = True
-
+        adoquen = ''
         fin=False
         while not fin:
             #Gestion eventos
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     fin=True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                             pause = True
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_SPACE:
                         self.j.anim = self.j.salto
                         self.j.vely = 0
                         self.j.velx = 0
@@ -193,7 +194,8 @@ class Juego:
                         while not fin2:
                             for event in pygame.event.get():
                                 if event.type == pygame.KEYDOWN:
-                                    self.j.anim = self.j.salto
+                                    if event.key == pygame.K_SPACE:
+                                        self.j.anim = self.j.salto
                                 if event.type == pygame.KEYUP and event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT :
                                     fin2=True
                             if self.j.anim == self.j.defensa:
@@ -211,10 +213,41 @@ class Juego:
                                     fin2=True
                             self.refresco()
                         self.j.anim = self.j.defensa
+                    if event.key == pygame.K_c:
+                        if self.j.anim == self.j.defensa:
+                            self.j.anim = self.j.punio
+                            self.j.velx = 1
+                            self.j.cont = 0
+                        adoquen += 'c'
+                    if event.key == pygame.K_x:
+                        if self.j.anim == self.j.defensa:
+                            self.j.anim = self.j.patada
+                            self.j.velx = 1
+                            self.j.cont = 0
+                        adoquen += 'x'
+                    if event.key == pygame.K_z :
+                        if self.j.anim == self.j.defensa:
+                            self.j.anim = self.j.patadaGiratoria
+                            self.j.velx = 1
+                            self.j.cont = 0
+                        adoquen += 'z'
+            print adoquen
 
-                    if event.key == pygame.K_SPACE:
-                        self.j.velx = 0
-                        self.j.vely = 0
+            if not 'c' in adoquen:
+                adoquen = ''
+
+            if len(adoquen) >= 3:
+                if 'cxz' in adoquen:
+                    print "!!!"
+                    self.j.anim = self.j.poder
+                    self.j.cont = 0
+                adoquen = ''
+
+
+
+
+
+
 
 
             #Refresco
@@ -238,8 +271,12 @@ class Juego:
         self.jugadores.draw(self.ventana)
         self.colisiones()
         self.update(self.jugadores)
+        self.update(self.bloques)
         pygame.display.flip()
-        self.reloj.tick(10)
+        self.reloj.tick(15)
+        if self.j.anim == self.j.defensa:
+            self.j.velx = 0
+            self.j.vely = 0
 
 
     def update(self , sprites):
@@ -250,13 +287,15 @@ class Juego:
                 pass
             sprite.rect.x += sprite.velx
             sprite.rect.y += sprite.vely
+        for b in self.bloques:
+            if b.velx > 0:
+                b.velx -= 1
 
     def colisiones(self):
         ls_col = []
         for bloque in self.bloques:
             ls_col = pygame.sprite.spritecollide(self.j , self.bloques , False)
             for b in ls_col:
-                print len(ls_col)
                 if self.j.vely < 0:
                     if self.j.rect.top < b.rect.bottom:
                         self.j.rect.top = b.rect.bottom
@@ -265,6 +304,7 @@ class Juego:
                         if self.j.rect.bottom > b.rect.top:
                             self.j.rect.bottom = b.rect.top
                             self.j.vely = 0
+
 
 
             ls_col = pygame.sprite.spritecollide(self.j , self.bloques , False)
@@ -277,3 +317,5 @@ class Juego:
                     if self.j.rect.right > b.rect.left:
                         self.j.rect.right = b.rect.left
                         self.j.velx = 0
+                        if self.j.anim != self.j.caminar and self.j.anim != self.j.defensa:
+                            b.velx = 10

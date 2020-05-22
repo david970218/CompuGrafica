@@ -138,7 +138,6 @@ class Juego:
         self.jugadorCreator = JugadorCreator()
         self.bloqueCreator = BloqueCreator()
         self.bloque = self.bloqueCreator.factory_method((300,300) , (32 , 32) ,  self.texturas , (0,0)  )
-
         self.texturaFondo.add(self.fondo)
         self.bloques.add(self.bloque)
         self.j= self.jugadorCreator.factory_method((ANCHO/2 , ALTO/2) , "gato")
@@ -156,7 +155,7 @@ class Juego:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                             pause = True
-                    if event.key == pygame.K_UP:
+                    if event.key == pygame.K_UP :
                         self.j.dir = self.j.arriba
                         self.j.vely = -5
                         self.j.velx = 0
@@ -176,8 +175,8 @@ class Juego:
                         self.j.velx = 0
                         self.j.vely = 0
 
-            #Refresco
             self.ventana.fill(NEGRO)
+            #Refresco
             self.ventana.blit(self.cuadro , [0,0])
             self.j.setAnim()
             self.texturaFondo.draw(self.ventana)
@@ -201,9 +200,9 @@ class Juego:
     def update(self , sprites):
         for sprite in sprites:
             if sprite.rect.x + sprite.velx > ANCHO - 50  or sprite.rect.x + sprite.velx < 0:
-                pass
+                return 0
             if sprite.rect.y + sprite.vely > ALTO - 50  or sprite.rect.y + sprite.vely < 0:
-                pass
+                return 0
             sprite.rect.x += sprite.velx
             sprite.rect.y += sprite.vely
 
